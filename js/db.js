@@ -2,8 +2,8 @@
 // 1. Go to https://jsonbin.io and create a free account
 // 2. Create a new bin with this default JSON: {"users":[],"orders":[],"ranks":[],"coins":[],"prices":{},"logo":""}
 // 3. Copy your BIN ID and API KEY and paste below
-const JSONBIN_ID  = 'YOUR_BIN_ID_HERE';   // e.g. 6650abc123def456
-const JSONBIN_KEY = 'YOUR_API_KEY_HERE';  // e.g. $2a$10$...
+const JSONBIN_ID  = '6a911de7da38895dfe1aea90';   // e.g. 6650abc123def456
+const JSONBIN_KEY = '$2a$10$JaC63U5FM3OndHgGdJpqz.pvvUKBSB9ETiIEr.fPafGM5urPjqQxO';  // e.g. $2a$10$...
 
 const API = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
 const HEADERS = { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY };
