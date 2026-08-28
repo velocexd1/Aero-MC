@@ -1,11 +1,14 @@
 // ── JSONBin Config ────────────────────────────────────────
-// Same bin as the store — both sites share the same data
+// 1. Go to https://jsonbin.io and create a free account
+// 2. Create a new bin with this default JSON: {"users":[],"orders":[],"ranks":[],"coins":[],"prices":{},"logo":""}
+// 3. Copy your BIN ID and API KEY and paste below
 const JSONBIN_ID  = 'YOUR_BIN_ID_HERE';   // e.g. 6650abc123def456
 const JSONBIN_KEY = 'YOUR_API_KEY_HERE';  // e.g. $2a$10$...
 
 const API = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
 const HEADERS = { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY };
 
+// Local cache so UI feels instant
 let _cache = null;
 
 const DB = {
@@ -47,13 +50,13 @@ const DB = {
   async getPrices() { return (await this._get()).prices || {}; },
   async getLogo()   { return (await this._get()).logo   || ''; },
 
-  getCurrentUser()  { return JSON.parse(localStorage.getItem('aeromc_current_user') || 'null'); },
+  getCurrentUser() { return JSON.parse(localStorage.getItem('aeromc_current_user') || 'null'); },
   setCurrentUser(u) { localStorage.setItem('aeromc_current_user', JSON.stringify(u)); },
-  logout()          { localStorage.removeItem('aeromc_current_user'); },
+  logout() { localStorage.removeItem('aeromc_current_user'); },
 
   async register(username, email, password) {
     const data = await this._get();
-    if (data.users.find(u => u.email === email))       return { ok: false, msg: 'Email already registered.' };
+    if (data.users.find(u => u.email === email))    return { ok: false, msg: 'Email already registered.' };
     if (data.users.find(u => u.username === username)) return { ok: false, msg: 'Username already taken.' };
     const user = { id: Date.now(), username, email, password, role: 'user', joined: new Date().toISOString() };
     data.users.push(user);
