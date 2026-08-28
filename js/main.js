@@ -1,36 +1,15 @@
-function getStorePrices() {
-  return JSON.parse(localStorage.getItem('aeromc_prices') || '{}');
-}
-function getRankPrice(id) {
-  return getStorePrices()['rank_' + id] || 'Price TBA';
-}
-function getCoinPrice(id) {
-  return getStorePrices()['coin_' + id] || 'Price TBA';
-}
-function getRanks() {
-  return JSON.parse(localStorage.getItem('aeromc_ranks') || JSON.stringify([
-    { id: 'vip', name: 'VIP', icon: '⚡', featured: false, perks: ['Custom prefix [VIP]', 'Access to /fly', 'Color chat', '2x XP boost', 'VIP kit daily'] },
-    { id: 'elite', name: 'Elite', icon: '🌊', featured: true, perks: ['Custom prefix [Elite]', 'All VIP perks', '/nick command', '3x XP boost', 'Elite kit daily', 'Priority queue'] },
-    { id: 'legend', name: 'Legend', icon: '🔥', featured: false, perks: ['Custom prefix [Legend]', 'All Elite perks', 'Custom join message', '5x XP boost', 'Legend kit daily', 'Private warp'] },
-    { id: 'aero', name: 'Aero', icon: '✈', featured: false, perks: ['Custom prefix [Aero]', 'All Legend perks', 'Staff-like commands', '10x XP boost', 'Aero kit daily', 'Custom particle trail', 'Exclusive AeroMC badge'] }
-  ]));
-}
-function getCoins() {
-  return JSON.parse(localStorage.getItem('aeromc_coins') || JSON.stringify([
-    { id: 'c500', amount: '500', icon: '🪙' },
-    { id: 'c1000', amount: '1,000', icon: '💰' },
-    { id: 'c2500', amount: '2,500', icon: '💎' },
-    { id: 'c5000', amount: '5,000', icon: '👑' }
-  ]));
-}
-function getLogo() {
-  return localStorage.getItem('aeromc_logo') || '';
-}
-
 let pendingPurchase = null;
 
-function renderLogo() {
-  const logo = getLogo();
+async function init() {
+  await DB.seedAdmin();
+  await renderLogo();
+  await renderRanks();
+  await renderCoins();
+  updateAuthUI();
+}
+
+async function renderLogo() {
+  const logo = await DB.getLogo();
   const placeholder = document.getElementById('logoPlaceholder');
   const logoImg = document.getElementById('logoImg');
   const footerLogo = document.getElementById('footerLogoImg');
@@ -45,34 +24,38 @@ function renderLogo() {
   }
 }
 
-function renderRanks() {
-  const ranks = getRanks();
+async function renderRanks() {
+  const [ranks, prices] = await Promise.all([DB.getRanks(), DB.getPrices()]);
   const grid = document.getElementById('ranksGrid');
   if (!ranks.length) { grid.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:2rem;">No ranks available yet.</p>'; return; }
-  grid.innerHTML = ranks.map(r => `
-    <div class="rank-card ${r.featured ? 'featured' : ''}" onclick="buyItem('rank','${r.id}','${r.name} Rank','${getRankPrice(r.id)}')">
+  grid.innerHTML = ranks.map(r => {
+    const price = prices['rank_' + r.id] || 'Price TBA';
+    return `
+    <div class="rank-card ${r.featured ? 'featured' : ''}" onclick="buyItem('rank','${r.id}','${r.name} Rank','${price}')">
       <div class="rank-icon">${r.icon}</div>
       <div class="rank-name">${r.name}</div>
-      <div class="rank-price">${getRankPrice(r.id)} <span>/ one-time</span></div>
+      <div class="rank-price">${price} <span>/ one-time</span></div>
       <ul class="rank-perks">${r.perks.map(p => `<li>${p}</li>`).join('')}</ul>
       <button class="btn btn-primary" style="width:100%">Buy ${r.name}</button>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
-function renderCoins() {
-  const coins = getCoins();
+async function renderCoins() {
+  const [coins, prices] = await Promise.all([DB.getCoins(), DB.getPrices()]);
   const grid = document.getElementById('coinsGrid');
   if (!coins.length) { grid.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:2rem;">No coin packs available yet.</p>'; return; }
-  grid.innerHTML = coins.map(c => `
-    <div class="coin-card" onclick="buyItem('coins','${c.id}','${c.amount} AeroMC Coins','${getCoinPrice(c.id)}')">
+  grid.innerHTML = coins.map(c => {
+    const price = prices['coin_' + c.id] || 'Price TBA';
+    return `
+    <div class="coin-card" onclick="buyItem('coins','${c.id}','${c.amount} AeroMC Coins','${price}')">
       <div class="coin-icon">${c.icon}</div>
       <div class="coin-amount">${c.amount}</div>
       <div class="coin-label">AeroMC Coins</div>
-      <div class="coin-price">${getCoinPrice(c.id)}</div>
+      <div class="coin-price">${price}</div>
       <button class="btn btn-primary" style="width:100%;margin-top:0.75rem">Buy Now</button>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 function updateAuthUI() {
@@ -81,13 +64,11 @@ function updateAuthUI() {
   if (user) {
     nav.innerHTML = `
       <span style="color:var(--text-muted);font-size:0.85rem">👤 ${user.username}</span>
-      <button class="btn btn-outline" onclick="DB.logout();updateAuthUI()">Logout</button>
-    `;
+      <button class="btn btn-outline" onclick="DB.logout();updateAuthUI()">Logout</button>`;
   } else {
     nav.innerHTML = `
       <button class="btn btn-outline" onclick="openModal('login')">Login</button>
-      <button class="btn btn-primary" onclick="openModal('register')">Register</button>
-    `;
+      <button class="btn btn-primary" onclick="openModal('register')">Register</button>`;
   }
 }
 
@@ -97,21 +78,23 @@ function switchModal(from, to) { closeModal(from); setTimeout(() => openModal(to
 function clearAlerts() { document.querySelectorAll('.alert').forEach(a => { a.className = 'alert'; a.textContent = ''; }); }
 function showAlert(id, msg, type) { const el = document.getElementById(id); el.textContent = msg; el.className = 'alert ' + type; }
 
-function handleLogin() {
+async function handleLogin() {
   const email = document.getElementById('loginEmail').value.trim();
-  const pass = document.getElementById('loginPassword').value;
+  const pass  = document.getElementById('loginPassword').value;
   if (!email || !pass) return showAlert('loginAlert', 'Please fill all fields.', 'error');
-  const res = DB.login(email, pass);
+  showAlert('loginAlert', 'Logging in...', 'success');
+  const res = await DB.login(email, pass);
   if (!res.ok) return showAlert('loginAlert', res.msg, 'error');
   closeModal('login'); updateAuthUI(); showToast('Welcome back to AeroMC! 🚀');
 }
 
-function handleRegister() {
+async function handleRegister() {
   const username = document.getElementById('regUsername').value.trim();
-  const email = document.getElementById('regEmail').value.trim();
-  const pass = document.getElementById('regPassword').value;
+  const email    = document.getElementById('regEmail').value.trim();
+  const pass     = document.getElementById('regPassword').value;
   if (!username || !email || !pass) return showAlert('registerAlert', 'Please fill all fields.', 'error');
-  const res = DB.register(username, email, pass);
+  showAlert('registerAlert', 'Creating account...', 'success');
+  const res = await DB.register(username, email, pass);
   if (!res.ok) return showAlert('registerAlert', res.msg, 'error');
   closeModal('register'); updateAuthUI(); showToast('Welcome to AeroMC! ✈');
 }
@@ -120,17 +103,18 @@ function buyItem(type, id, name, price) {
   if (!DB.getCurrentUser()) { openModal('login'); return; }
   pendingPurchase = { type, id, name, price, buyer: DB.getCurrentUser().username };
   document.getElementById('purchaseTitle').textContent = 'Buy ' + name;
-  document.getElementById('purchaseDesc').textContent = 'Price: ' + price + ' — Complete your AeroMC purchase';
-  document.getElementById('purchaseUsername').value = DB.getCurrentUser().username;
+  document.getElementById('purchaseDesc').textContent  = 'Price: ' + price + ' — Complete your AeroMC purchase';
+  document.getElementById('purchaseUsername').value    = DB.getCurrentUser().username;
   openModal('purchase');
 }
 
-function submitPurchase() {
+async function submitPurchase() {
   const username = document.getElementById('purchaseUsername').value.trim();
-  const method = document.getElementById('purchaseMethod').value;
-  const txn = document.getElementById('purchaseTxn').value.trim();
+  const method   = document.getElementById('purchaseMethod').value;
+  const txn      = document.getElementById('purchaseTxn').value.trim();
   if (!username || !txn) return showToast('Please fill all fields.');
-  DB.addOrder({ ...pendingPurchase, username, method, txn });
+  showToast('Submitting order...');
+  await DB.addOrder({ ...pendingPurchase, username, method, txn });
   closeModal('purchase');
   showToast('Order submitted! AeroMC team will activate your rank shortly. ✈');
   pendingPurchase = null;
@@ -146,7 +130,4 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('active'); });
 });
 
-renderLogo();
-renderRanks();
-renderCoins();
-updateAuthUI();
+init();
