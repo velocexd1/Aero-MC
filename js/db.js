@@ -1,28 +1,22 @@
-// ── JSONBin Config ────────────────────────────────────────
-// 1. Go to https://jsonbin.io and create a free account
-// 2. Create a new bin with this default JSON: {"users":[],"orders":[],"ranks":[],"coins":[],"prices":{},"logo":""}
-// 3. Copy your BIN ID and API KEY and paste below
-const JSONBIN_ID  = '6a911de7da38895dfe1aea90';   // e.g. 6650abc123def456
-const JSONBIN_KEY = '$2a$10$JaC63U5FM3OndHgGdJpqz.pvvUKBSB9ETiIEr.fPafGM5urPjqQxO';  // e.g. $2a$10$...
+const NPOINT_URL = 'https://api.npoint.io/6633a82de251ba2982f0';
 
-const API = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
-const HEADERS = { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY };
-
-// Local cache so UI feels instant
 let _cache = null;
 
 const DB = {
   async _get() {
     if (_cache) return _cache;
-    const res = await fetch(API + '/latest', { headers: HEADERS });
-    const json = await res.json();
-    _cache = json.record;
+    const res = await fetch(NPOINT_URL);
+    _cache = await res.json();
     return _cache;
   },
 
   async _save(data) {
     _cache = data;
-    await fetch(API, { method: 'PUT', headers: HEADERS, body: JSON.stringify(data) });
+    await fetch(NPOINT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
   },
 
   async getUsers()  { return (await this._get()).users  || []; },
@@ -37,7 +31,7 @@ const DB = {
       { id: 'aero',   name: 'Aero',   icon: '✈', featured: false, perks: ['Custom prefix [Aero]', 'All Legend perks', 'Staff-like commands', '10x XP boost', 'Aero kit daily', 'Custom particle trail', 'Exclusive AeroMC badge'] }
     ];
   },
-  async getCoins()  {
+  async getCoins() {
     const c = (await this._get()).coins;
     if (c && c.length) return c;
     return [
@@ -50,13 +44,13 @@ const DB = {
   async getPrices() { return (await this._get()).prices || {}; },
   async getLogo()   { return (await this._get()).logo   || ''; },
 
-  getCurrentUser() { return JSON.parse(localStorage.getItem('aeromc_current_user') || 'null'); },
+  getCurrentUser()  { return JSON.parse(localStorage.getItem('aeromc_current_user') || 'null'); },
   setCurrentUser(u) { localStorage.setItem('aeromc_current_user', JSON.stringify(u)); },
-  logout() { localStorage.removeItem('aeromc_current_user'); },
+  logout()          { localStorage.removeItem('aeromc_current_user'); },
 
   async register(username, email, password) {
     const data = await this._get();
-    if (data.users.find(u => u.email === email))    return { ok: false, msg: 'Email already registered.' };
+    if (data.users.find(u => u.email === email))       return { ok: false, msg: 'Email already registered.' };
     if (data.users.find(u => u.username === username)) return { ok: false, msg: 'Username already taken.' };
     const user = { id: Date.now(), username, email, password, role: 'user', joined: new Date().toISOString() };
     data.users.push(user);
@@ -97,30 +91,11 @@ const DB = {
     await this._save(data);
   },
 
-  async saveRanks(ranks) {
-    const data = await this._get();
-    data.ranks = ranks; await this._save(data);
-  },
-
-  async saveCoins(coins) {
-    const data = await this._get();
-    data.coins = coins; await this._save(data);
-  },
-
-  async savePrices(prices) {
-    const data = await this._get();
-    data.prices = prices; await this._save(data);
-  },
-
-  async saveLogo(logo) {
-    const data = await this._get();
-    data.logo = logo; await this._save(data);
-  },
-
-  async saveUsers(users) {
-    const data = await this._get();
-    data.users = users; await this._save(data);
-  },
+  async saveRanks(ranks)   { const data = await this._get(); data.ranks  = ranks;  await this._save(data); },
+  async saveCoins(coins)   { const data = await this._get(); data.coins  = coins;  await this._save(data); },
+  async savePrices(prices) { const data = await this._get(); data.prices = prices; await this._save(data); },
+  async saveLogo(logo)     { const data = await this._get(); data.logo   = logo;   await this._save(data); },
+  async saveUsers(users)   { const data = await this._get(); data.users  = users;  await this._save(data); },
 
   async seedAdmin() {
     const data = await this._get();
