@@ -1,21 +1,24 @@
-const NPOINT_URL = 'https://api.npoint.io/6633a82de251ba2982f0';
+const SUPABASE_URL = 'https://rnnsmtpakxknhneqokmj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJubnNtdHBha3hrbmhuZXFva21qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4ODk5NzEsImV4cCI6MjEwMzQ2NTk3MX0.AGihM1DV4uZ0uZxJjdAZrYs0MqPWFgr3PyoEu3gFyNo';
+const HEADERS = { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY };
 
 let _cache = null;
 
 const DB = {
   async _get() {
     if (_cache) return _cache;
-    const res = await fetch(NPOINT_URL);
-    _cache = await res.json();
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/store?id=eq.main&select=data`, { headers: HEADERS });
+    const rows = await res.json();
+    _cache = rows[0]?.data || { users: [], orders: [], ranks: [], coins: [], prices: {}, logo: '' };
     return _cache;
   },
 
   async _save(data) {
     _cache = data;
-    await fetch(NPOINT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+    await fetch(`${SUPABASE_URL}/rest/v1/store?id=eq.main`, {
+      method: 'PATCH',
+      headers: { ...HEADERS, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ data })
     });
   },
 
