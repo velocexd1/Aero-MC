@@ -1,48 +1,129 @@
-// Shared DB using localStorage (replace with real backend later)
+// ── JSONBin Config ────────────────────────────────────────
+// Same bin as the store — both sites share the same data
+const JSONBIN_ID  = 'YOUR_BIN_ID_HERE';   // e.g. 6650abc123def456
+const JSONBIN_KEY = 'YOUR_API_KEY_HERE';  // e.g. $2a$10$...
+
+const API = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
+const HEADERS = { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY };
+
+let _cache = null;
+
 const DB = {
-  getUsers: () => JSON.parse(localStorage.getItem('aeromc_users') || '[]'),
-  saveUsers: (u) => localStorage.setItem('aeromc_users', JSON.stringify(u)),
+  async _get() {
+    if (_cache) return _cache;
+    const res = await fetch(API + '/latest', { headers: HEADERS });
+    const json = await res.json();
+    _cache = json.record;
+    return _cache;
+  },
 
-  getOrders: () => JSON.parse(localStorage.getItem('aeromc_orders') || '[]'),
-  saveOrders: (o) => localStorage.setItem('aeromc_orders', JSON.stringify(o)),
+  async _save(data) {
+    _cache = data;
+    await fetch(API, { method: 'PUT', headers: HEADERS, body: JSON.stringify(data) });
+  },
 
-  getCurrentUser: () => JSON.parse(localStorage.getItem('aeromc_current_user') || 'null'),
-  setCurrentUser: (u) => localStorage.setItem('aeromc_current_user', JSON.stringify(u)),
-  logout: () => localStorage.removeItem('aeromc_current_user'),
+  async getUsers()  { return (await this._get()).users  || []; },
+  async getOrders() { return (await this._get()).orders || []; },
+  async getRanks()  {
+    const r = (await this._get()).ranks;
+    if (r && r.length) return r;
+    return [
+      { id: 'vip',    name: 'VIP',    icon: '⚡', featured: false, perks: ['Custom prefix [VIP]', 'Access to /fly', 'Color chat', '2x XP boost', 'VIP kit daily'] },
+      { id: 'elite',  name: 'Elite',  icon: '🌊', featured: true,  perks: ['Custom prefix [Elite]', 'All VIP perks', '/nick command', '3x XP boost', 'Elite kit daily', 'Priority queue'] },
+      { id: 'legend', name: 'Legend', icon: '🔥', featured: false, perks: ['Custom prefix [Legend]', 'All Elite perks', 'Custom join message', '5x XP boost', 'Legend kit daily', 'Private warp'] },
+      { id: 'aero',   name: 'Aero',   icon: '✈', featured: false, perks: ['Custom prefix [Aero]', 'All Legend perks', 'Staff-like commands', '10x XP boost', 'Aero kit daily', 'Custom particle trail', 'Exclusive AeroMC badge'] }
+    ];
+  },
+  async getCoins()  {
+    const c = (await this._get()).coins;
+    if (c && c.length) return c;
+    return [
+      { id: 'c500',  amount: '500',   icon: '🪙' },
+      { id: 'c1000', amount: '1,000', icon: '💰' },
+      { id: 'c2500', amount: '2,500', icon: '💎' },
+      { id: 'c5000', amount: '5,000', icon: '👑' }
+    ];
+  },
+  async getPrices() { return (await this._get()).prices || {}; },
+  async getLogo()   { return (await this._get()).logo   || ''; },
 
-  register(username, email, password) {
-    const users = this.getUsers();
-    if (users.find(u => u.email === email)) return { ok: false, msg: 'Email already registered.' };
-    if (users.find(u => u.username === username)) return { ok: false, msg: 'Username already taken.' };
+  getCurrentUser()  { return JSON.parse(localStorage.getItem('aeromc_current_user') || 'null'); },
+  setCurrentUser(u) { localStorage.setItem('aeromc_current_user', JSON.stringify(u)); },
+  logout()          { localStorage.removeItem('aeromc_current_user'); },
+
+  async register(username, email, password) {
+    const data = await this._get();
+    if (data.users.find(u => u.email === email))       return { ok: false, msg: 'Email already registered.' };
+    if (data.users.find(u => u.username === username)) return { ok: false, msg: 'Username already taken.' };
     const user = { id: Date.now(), username, email, password, role: 'user', joined: new Date().toISOString() };
-    users.push(user);
-    this.saveUsers(users);
-    this.setCurrentUser({ id: user.id, username, email, role: user.role });
+    data.users.push(user);
+    await this._save(data);
+    this.setCurrentUser({ id: user.id, username, email, role: 'user' });
     return { ok: true };
   },
 
-  login(email, password) {
-    const users = this.getUsers();
-    const user = users.find(u => u.email === email && u.password === password);
+  async login(email, password) {
+    const data = await this._get();
+    const user = data.users.find(u => u.email === email && u.password === password);
     if (!user) return { ok: false, msg: 'Invalid email or password.' };
     this.setCurrentUser({ id: user.id, username: user.username, email, role: user.role });
     return { ok: true, role: user.role };
   },
 
-  addOrder(order) {
-    const orders = this.getOrders();
-    orders.unshift({ ...order, id: Date.now(), date: new Date().toISOString(), status: 'pending' });
-    this.saveOrders(orders);
+  async addOrder(order) {
+    const data = await this._get();
+    data.orders.unshift({ ...order, id: Date.now(), date: new Date().toISOString(), status: 'pending' });
+    await this._save(data);
   },
 
-  // Seed admin if not exists
-  seedAdmin() {
-    const users = this.getUsers();
-    if (!users.find(u => u.role === 'admin')) {
-      users.push({ id: 1, username: 'admin', email: 'admin@aeromc.fun', password: 'admin123', role: 'admin', joined: new Date().toISOString() });
-      this.saveUsers(users);
+  async updateOrderStatus(id, status) {
+    const data = await this._get();
+    const o = data.orders.find(o => o.id === id);
+    if (o) { o.status = status; await this._save(data); }
+  },
+
+  async deleteOrder(id) {
+    const data = await this._get();
+    data.orders = data.orders.filter(o => o.id !== id);
+    await this._save(data);
+  },
+
+  async deleteUser(id) {
+    const data = await this._get();
+    data.users = data.users.filter(u => u.id !== id);
+    await this._save(data);
+  },
+
+  async saveRanks(ranks) {
+    const data = await this._get();
+    data.ranks = ranks; await this._save(data);
+  },
+
+  async saveCoins(coins) {
+    const data = await this._get();
+    data.coins = coins; await this._save(data);
+  },
+
+  async savePrices(prices) {
+    const data = await this._get();
+    data.prices = prices; await this._save(data);
+  },
+
+  async saveLogo(logo) {
+    const data = await this._get();
+    data.logo = logo; await this._save(data);
+  },
+
+  async saveUsers(users) {
+    const data = await this._get();
+    data.users = users; await this._save(data);
+  },
+
+  async seedAdmin() {
+    const data = await this._get();
+    if (!data.users.find(u => u.role === 'admin')) {
+      data.users.push({ id: 1, username: 'admin', email: 'admin@aeromc.fun', password: 'admin123', role: 'admin', joined: new Date().toISOString() });
+      await this._save(data);
     }
   }
 };
-
-DB.seedAdmin();
