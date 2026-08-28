@@ -164,8 +164,12 @@ nav {
 }
 
 .hero h1 span {
+  display: inline-block;
   background: linear-gradient(135deg, var(--primary-light), var(--accent), #818cf8);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .hero p {
