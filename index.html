@@ -12,10 +12,10 @@
 <!-- NAV -->
 <nav>
   <a href="index.html" class="nav-logo">
-    <div class="nav-logo-placeholder">A</div>
+    <div class="nav-logo-placeholder" id="logoPlaceholder">A</div>
+    <img id="logoImg" src="" alt="AeroMC" style="display:none;height:40px;width:40px;border-radius:8px;object-fit:cover;" />
     <span class="nav-logo-text">AERO MC</span>
   </a>
-
   <div class="nav-links">
     <a href="#ranks">Ranks</a>
     <a href="#coins">Coins</a>
@@ -25,7 +25,6 @@
       play.aeromc.fun
     </div>
   </div>
-
   <div class="nav-auth" id="navAuth">
     <button class="btn btn-outline" onclick="openModal('login')">Login</button>
     <button class="btn btn-primary" onclick="openModal('register')">Register</button>
@@ -48,18 +47,9 @@
       <a href="#coins" class="btn btn-outline btn-lg">🪙 Get Coins</a>
     </div>
     <div class="hero-stats">
-      <div class="stat">
-        <div class="stat-num">500+</div>
-        <div class="stat-label">Players Online</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">10K+</div>
-        <div class="stat-label">Registered Users</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">99.9%</div>
-        <div class="stat-label">Uptime</div>
-      </div>
+      <div class="stat"><div class="stat-num">500+</div><div class="stat-label">Players Online</div></div>
+      <div class="stat"><div class="stat-num">10K+</div><div class="stat-label">Registered Users</div></div>
+      <div class="stat"><div class="stat-num">99.9%</div><div class="stat-label">Uptime</div></div>
     </div>
   </div>
 </section>
@@ -92,26 +82,10 @@
     <p>Get your AeroMC rank in minutes</p>
   </div>
   <div class="steps-grid">
-    <div class="step-card">
-      <div class="step-num">1</div>
-      <h3>Register / Login</h3>
-      <p>Create your AeroMC Store account or log in to get started.</p>
-    </div>
-    <div class="step-card">
-      <div class="step-num">2</div>
-      <h3>Choose a Rank</h3>
-      <p>Browse AeroMC ranks and coin packs, pick what suits you.</p>
-    </div>
-    <div class="step-card">
-      <div class="step-num">3</div>
-      <h3>Make Payment</h3>
-      <p>Pay via GPay, bKash, Nagad, or UPI — fast and secure.</p>
-    </div>
-    <div class="step-card">
-      <div class="step-num">4</div>
-      <h3>Get Your Rank</h3>
-      <p>Your AeroMC rank is activated within minutes after confirmation.</p>
-    </div>
+    <div class="step-card"><div class="step-num">1</div><h3>Register / Login</h3><p>Create your AeroMC Store account or log in to get started.</p></div>
+    <div class="step-card"><div class="step-num">2</div><h3>Choose a Rank</h3><p>Browse AeroMC ranks and coin packs, pick what suits you.</p></div>
+    <div class="step-card"><div class="step-num">3</div><h3>Make Payment</h3><p>Pay via GPay, bKash, Nagad, or UPI — fast and secure.</p></div>
+    <div class="step-card"><div class="step-num">4</div><h3>Get Your Rank</h3><p>Your AeroMC rank is activated within minutes after confirmation.</p></div>
   </div>
 </section>
 
@@ -119,7 +93,10 @@
 <footer>
   <div class="footer-grid">
     <div class="footer-brand">
-      <h3>✈ AERO MC</h3>
+      <h3>
+        <img id="footerLogoImg" src="" alt="" style="display:none;height:28px;width:28px;border-radius:6px;object-fit:cover;vertical-align:middle;margin-right:6px;" />
+        ✈ AERO MC
+      </h3>
       <p>AeroMC is the ultimate Minecraft experience. Soar through the skies, dominate the leaderboards, and make your mark on AeroMC.</p>
       <br />
       <div class="nav-server" style="display:inline-flex;">
@@ -160,18 +137,10 @@
     <h2>Welcome Back</h2>
     <p>Login to your AeroMC account</p>
     <div class="alert" id="loginAlert"></div>
-    <div class="form-group">
-      <label>Email</label>
-      <input type="email" id="loginEmail" placeholder="you@example.com" />
-    </div>
-    <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="loginPassword" placeholder="••••••••" />
-    </div>
+    <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com" /></div>
+    <div class="form-group"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••" /></div>
     <button class="form-submit" onclick="handleLogin()">Login to AeroMC</button>
-    <div class="form-switch">
-      Don't have an account? <a onclick="switchModal('login','register')">Register</a>
-    </div>
+    <div class="form-switch">Don't have an account? <a onclick="switchModal('login','register')">Register</a></div>
   </div>
 </div>
 
@@ -182,22 +151,11 @@
     <h2>Join AeroMC</h2>
     <p>Create your AeroMC Store account</p>
     <div class="alert" id="registerAlert"></div>
-    <div class="form-group">
-      <label>Minecraft Username</label>
-      <input type="text" id="regUsername" placeholder="YourMCName" />
-    </div>
-    <div class="form-group">
-      <label>Email</label>
-      <input type="email" id="regEmail" placeholder="you@example.com" />
-    </div>
-    <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="regPassword" placeholder="••••••••" />
-    </div>
+    <div class="form-group"><label>Minecraft Username</label><input type="text" id="regUsername" placeholder="YourMCName" /></div>
+    <div class="form-group"><label>Email</label><input type="email" id="regEmail" placeholder="you@example.com" /></div>
+    <div class="form-group"><label>Password</label><input type="password" id="regPassword" placeholder="••••••••" /></div>
     <button class="form-submit" onclick="handleRegister()">Create AeroMC Account</button>
-    <div class="form-switch">
-      Already have an account? <a onclick="switchModal('register','login')">Login</a>
-    </div>
+    <div class="form-switch">Already have an account? <a onclick="switchModal('register','login')">Login</a></div>
   </div>
 </div>
 
@@ -207,10 +165,7 @@
     <button class="modal-close" onclick="closeModal('purchase')">✕</button>
     <h2 id="purchaseTitle">Purchase</h2>
     <p id="purchaseDesc">Complete your AeroMC purchase</p>
-    <div class="form-group">
-      <label>Minecraft Username</label>
-      <input type="text" id="purchaseUsername" placeholder="YourMCName" />
-    </div>
+    <div class="form-group"><label>Minecraft Username</label><input type="text" id="purchaseUsername" placeholder="YourMCName" /></div>
     <div class="form-group">
       <label>Payment Method</label>
       <select id="purchaseMethod" style="width:100%;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.9rem;outline:none;">
@@ -220,10 +175,7 @@
         <option value="upi">UPI</option>
       </select>
     </div>
-    <div class="form-group">
-      <label>Transaction ID</label>
-      <input type="text" id="purchaseTxn" placeholder="Enter your transaction ID" />
-    </div>
+    <div class="form-group"><label>Transaction ID</label><input type="text" id="purchaseTxn" placeholder="Enter your transaction ID" /></div>
     <button class="form-submit" onclick="submitPurchase()">Submit Order</button>
   </div>
 </div>
